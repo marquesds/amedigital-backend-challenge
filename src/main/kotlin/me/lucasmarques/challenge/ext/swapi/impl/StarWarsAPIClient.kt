@@ -30,7 +30,7 @@ class StarWarsAPIClient : IStarWarsAPIClient {
         return 0
     }
 
-    private fun getResponse(uri: String): Response? {
+    fun getResponse(uri: String): Response? {
         return try {
             get(uri)
         } catch (ex: Throwable) {
