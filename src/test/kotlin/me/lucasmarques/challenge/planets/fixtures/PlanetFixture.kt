@@ -35,4 +35,8 @@ class PlanetFixture {
         repository.saveAll(listOf(planet1, planet2, planet3, planet4, planet5))
     }
 
+    fun deletePlanets() {
+        repository.deleteAll()
+    }
+
 }

@@ -1,10 +1,9 @@
 package me.lucasmarques.challenge.planets
 
 import me.lucasmarques.challenge.ext.swapi.IStarWarsAPIClient
-import me.lucasmarques.challenge.ext.swapi.impl.StarWarsAPIClient
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
+import javax.transaction.Transactional
 
 @Service
 class PlanetService @Autowired constructor(
@@ -23,14 +22,15 @@ class PlanetService @Autowired constructor(
     }
 
     fun findByName(name: String): PlanetDTO? {
-        return null
+        return planetRepository.findByName(name)?.toDTO()
     }
 
     fun findById(id: Long): PlanetDTO? {
-        return planetRepository.findById(id).map { it.toDTO() }.orElseGet(null)
+        return planetRepository.findById(id).orElse(null)?.toDTO()
     }
 
-    fun delete(name: String) {
-        // planetRepository.delete()
+    @Transactional
+    fun deleteByName(name: String): Long {
+        return planetRepository.deleteByName(name)
     }
 }

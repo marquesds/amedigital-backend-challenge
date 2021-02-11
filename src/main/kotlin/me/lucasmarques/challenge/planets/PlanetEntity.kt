@@ -9,7 +9,7 @@ data class PlanetEntity(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     val name: String,
 
     @Column(nullable = false)
@@ -24,6 +24,7 @@ data class PlanetEntity(
     @Bean
     fun toDTO(): PlanetDTO {
         return PlanetDTO(
+            id = this.id,
             name = this.name,
             climate = this.climate,
             terrain = this.terrain,

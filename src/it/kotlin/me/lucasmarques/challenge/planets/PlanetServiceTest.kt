@@ -5,12 +5,14 @@ import io.mockk.mockk
 import khttp.responses.Response
 import me.lucasmarques.challenge.ext.swapi.impl.StarWarsAPIClient
 import me.lucasmarques.challenge.planets.fixtures.PlanetFixture
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import strikt.api.expectThat
 import strikt.assertions.hasSize
 import strikt.assertions.isEqualTo
+import strikt.assertions.isNull
 
 @SpringBootTest
 class PlanetServiceTest {
@@ -19,12 +21,20 @@ class PlanetServiceTest {
     lateinit var planetService: PlanetService
 
     @Autowired
+    lateinit var planetRepository: PlanetRepository
+
+    @Autowired
     lateinit var planetFixture: PlanetFixture
+
+    @BeforeEach
+    fun before() {
+        planetFixture.deletePlanets()
+    }
 
     @Test
     fun testShouldSaveNonexistentStarWarsPlanet() {
-        val mockApi = mockk<StarWarsAPIClient>()
         val planetName = "Earth"
+        val mockApi = mockk<StarWarsAPIClient>()
 
         every { mockApi.getResponse("/planets/?search=$planetName") } returns null
 
@@ -37,10 +47,10 @@ class PlanetServiceTest {
 
     @Test
     fun testShouldSaveExistentPlanet() {
+        val planetName = "Tatooine"
+
         val mockResponse = mockk<Response>()
         val mockApi = mockk<StarWarsAPIClient>()
-
-        val planetName = "Tatooine"
 
         every { mockResponse.statusCode } returns 200
         every { mockResponse.jsonObject } returns planetFixture.fakeTatooineJsonResponse()
@@ -60,13 +70,66 @@ class PlanetServiceTest {
 
         expectThat(planets).hasSize(5)
         expectThat(planets[0].name).isEqualTo("Alderaan")
-        expectThat(planets[5].name).isEqualTo("Bespin")
+        expectThat(planets[4].name).isEqualTo("Bespin")
     }
 
     @Test
     fun testShouldNotFindPlanets() {
         val planets = planetService.list()
         expectThat(planets).hasSize(0)
+    }
+
+    @Test
+    fun testShouldFindPlanetByName() {
+        val planetName = "Alderaan"
+        planetFixture.savePlanets()
+        val planetDTO = planetService.findByName(planetName)
+
+        expectThat(planetDTO?.name).isEqualTo(planetName)
+    }
+
+    @Test
+    fun testShouldNotFindNonexistentPlanetByName() {
+        val planetName = "Earth"
+        planetFixture.savePlanets()
+        val planetDTO = planetService.findByName(planetName)
+
+        expectThat(planetDTO).isNull()
+    }
+
+    @Test
+    fun testShouldFindPlanetById() {
+        val planetName = "Alderaan"
+        planetFixture.savePlanets()
+        val planetEntity = planetRepository.findByName(planetName)
+        val planetDTO = planetService.findById(planetEntity!!.id!!)
+
+        expectThat(planetDTO?.name).isEqualTo("Alderaan")
+    }
+
+    @Test
+    fun testShouldNotFindNonexistentPlanetById() {
+        val planetDTO = planetService.findById(8000)
+        expectThat(planetDTO).isNull()
+    }
+
+    @Test
+    fun testShouldDeletePlanetByName() {
+        val planetName = "Alderaan"
+
+        planetFixture.savePlanets()
+        val affectedRows = planetService.deleteByName(planetName)
+
+        val planetDTO = planetService.findByName(planetName)
+        expectThat(affectedRows).isEqualTo(1)
+        expectThat(planetDTO).isNull()
+    }
+
+    @Test
+    fun testShouldNotDeleteNonexistentPlanetByName() {
+        val affectedRows = planetService.deleteByName("Earth")
+
+        expectThat(affectedRows).isEqualTo(0)
     }
 
 }

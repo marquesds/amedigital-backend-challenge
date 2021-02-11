@@ -2,6 +2,18 @@ version: '3.1'
 
 services:
 
+  challenge:
+    build: .
+    container_name: "amedigital_backend_challenge"
+    ports:
+      - 8080:8080
+    links:
+      - db
+    depends_on:
+      - db
+    networks:
+      - challenge_network
+
   db:
     image: postgres
     restart: always
@@ -10,9 +22,22 @@ services:
       POSTGRES_PASSWORD: 123mudar
     ports:
       - 5432:5432
+    volumes:
+      - popcorn-data:/var/lib/postgres
+    networks:
+      challenge_network:
+        aliases:
+          - postgres.amedigital-backend-challenge.io
 
   adminer:
     image: adminer
     restart: always
     ports:
       - 9000:8080
+
+volumes:
+  challenge-data:
+
+networks:
+  challenge_network:
+    driver: bridge
